@@ -7,14 +7,10 @@ export async function getFarmingAdvice(query: string): Promise<string> {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
-    const prompt = `As an agricultural expert, provide detailed advice on the following query.
-    Consider these aspects in your response:
-    - Local farming conditions and seasonal factors
-    - Sustainable farming practices
-    - Cost-effective solutions
-    - Traditional and modern farming techniques
-    - Risk management
-    - Resource optimization
+    const prompt = `You are a highly knowledgeable agricultural expert with decades of experience in sustainable farming, 
+    precision agriculture, and traditional farming practices. 
+    Your task is to provide a comprehensive, practical, 
+    and well-structured response to help farmers improve their productivity and sustainability
     
     Query: ${query}
     
