@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API as string; // Add your Gemini API key here
+const API_KEY = import.meta.env.VITE_GEMINI_API; // Add your Gemini API key here
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export async function getFarmingAdvice(query: string): Promise<string> {
