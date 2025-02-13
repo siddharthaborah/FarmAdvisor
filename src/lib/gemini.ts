@@ -21,7 +21,7 @@ export async function getFarmingAdvice(query: string): Promise<string> {
     Please structure your response with clear sections and actionable steps.`;
 
     const result = await model.generateContent(prompt);
-    return result.generations[0].text;
+    return result.response.text();
   } catch (error) {
     console.error('Error getting farming advice:', error);
     return 'Sorry, I encountered an error while processing your request. Please try again later.';
