@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plane, Sun, Droplets, BadgeDollarSign, Send, Loader2, Sprout, Wind, ThermometerSun, History } from 'lucide-react';
 import { getFarmingAdvice } from './lib/gemini';
+import ReactMarkdown from 'react-markdown';
 
 function App() {
   const [query, setQuery] = useState('');
@@ -112,10 +113,10 @@ function App() {
 
             {response && (
               <div className="bg-gray-50 rounded-lg p-6">
-                <h3 className="font-semibold text-xl mb-4">Expert Advice:</h3>
-                <p className="text-gray-700 whitespace-pre-wrap text-lg leading-relaxed">{response}</p>
-              </div>
-            )}
+                   <h3 className="font-semibold text-xl mb-4">Expert Advice:</h3>
+                   <ReactMarkdown>{response}</ReactMarkdown>
+               </div>
+              )}
 
             {history.length > 0 && (
               <div className="mt-8">
