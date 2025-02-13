@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 
 export async function getFarmingAdvice(query: string): Promise<string> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     
     const prompt = `As an agricultural expert, provide detailed advice on the following query.
     Consider these aspects in your response:
