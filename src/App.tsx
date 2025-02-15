@@ -1,61 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { Plane, Sun, Droplets, BadgeDollarSign, Send, Loader2, Sprout, Wind, ThermometerSun, History, FileImage, Search } from 'lucide-react';
-import { getFarmingAdvice } from './lib/gemini';
-import { identifyPlantDisease } from './lib/plantApi';
-import ReactMarkdown from 'react-markdown';
+import React, { useState, useEffect } from "react";
+import { Plane, Sun, Droplets, BadgeDollarSign, Send, Loader2, Sprout, Wind, ThermometerSun, History } from "lucide-react";
+import { getFarmingAdvice } from "./lib/gemini";
+import ReactMarkdown from "react-markdown";
 
 function App() {
-  const [query, setQuery] = useState('');
-  const [response, setResponse] = useState('');
+  const [query, setQuery] = useState("");
+  const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<Array<{ query: string; response: string }>>(
-    JSON.parse(localStorage.getItem('queryHistory') || '[]')
+    JSON.parse(localStorage.getItem("queryHistory") || "[]")
   );
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [plantResult, setPlantResult] = useState<any>(null);
-  const [plantLoading, setPlantLoading] = useState(false);
-
   useEffect(() => {
-    localStorage.setItem('queryHistory', JSON.stringify(history));
+    localStorage.setItem("queryHistory", JSON.stringify(history));
   }, [history]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
+    console.log("Submitting query:", query); // Debugging
+
     setLoading(true);
     try {
       const advice = await getFarmingAdvice(query);
+      console.log("AI Response:", advice); // Debugging
       setResponse(advice);
-      setHistory(prev => [...prev, { query: query.trim(), response: advice }].slice(-5));
+      setHistory((prev) => [...prev, { query: query.trim(), response: advice }].slice(-5));
     } catch (error) {
-      console.error('Error:', error);
+      console.error("Error:", error);
+      setResponse("Something went wrong. Try again later.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setSelectedFile(event.target.files[0]);
-    }
-  };
-
-  const handleImageUpload = async () => {
-    if (!selectedFile) {
-      alert("Please select an image first.");
-      return;
-    }
-
-    setPlantLoading(true);
-    try {
-      const result = await identifyPlantDisease(selectedFile);
-      setPlantResult(result);
-    } catch (error) {
-      console.error("Error identifying plant disease:", error);
-    } finally {
-      setPlantLoading(false);
     }
   };
 
@@ -65,7 +41,15 @@ function App() {
     { icon: <Droplets className="text-blue-500" />, title: "Irrigation Tips", description: "Smart water management practices" },
     { icon: <Wind className="text-gray-500" />, title: "Pest Control", description: "Natural and chemical pest management" },
     { icon: <ThermometerSun className="text-orange-500" />, title: "Weather Insights", description: "Climate-smart farming decisions" },
-    { icon: <BadgeDollarSign className="text-green-500" />, title: "Market Updates", description: "Current prices and market trends" }
+    { icon: <BadgeDollarSign className="text-green-500" />, title: "Market Updates", description: "Current prices and market trends" },
+  ];
+
+  const suggestions = [
+    "What crops are best suited for the current season?",
+    "How to manage water during drought conditions?",
+    "Natural methods to control common crop pests",
+    "Best practices for organic fertilization",
+    "When is the optimal time to harvest?",
   ];
 
   return (
@@ -82,16 +66,12 @@ function App() {
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           {categories.map((category, index) => (
             <div key={index} className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow">
-              <div className="flex items-center gap-3 mb-4">
-                {category.icon}
-                <h2 className="text-xl font-semibold">{category.title}</h2>
-              </div>
+              <div className="flex items-center gap-3 mb-4">{category.icon}<h2 className="text-xl font-semibold">{category.title}</h2></div>
               <p className="text-gray-600">{category.description}</p>
             </div>
           ))}
         </div>
 
-        {/* AI Query Section */}
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg p-8 shadow-lg">
             <form onSubmit={handleSubmit} className="mb-6">
@@ -107,11 +87,19 @@ function App() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 focus:outline-none flex items-center gap-2 text-lg font-medium"
+                    className="bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 flex items-center gap-2 text-lg font-medium"
                   >
                     {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                     Ask
                   </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((suggestion, index) => (
+                    <button key={index} type="button" onClick={() => setQuery(suggestion)}
+                      className="text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full hover:bg-green-100">
+                      {suggestion}
+                    </button>
+                  ))}
                 </div>
               </div>
             </form>
@@ -122,31 +110,21 @@ function App() {
                 <ReactMarkdown>{response}</ReactMarkdown>
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Plant Disease Identification */}
-        <div className="max-w-4xl mx-auto mt-12">
-          <div className="bg-white rounded-lg p-8 shadow-lg">
-            <h2 className="text-2xl font-semibold mb-4">Plant Disease Identification</h2>
-            <div className="flex flex-col gap-4">
-              <div className="flex gap-2">
-                <input type="file" accept="image/*" onChange={handleFileChange} className="border border-gray-300 rounded-lg p-2" />
-                <button
-                  onClick={handleImageUpload}
-                  disabled={plantLoading}
-                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 text-lg font-medium"
-                >
-                  {plantLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Search className="w-6 h-6" />}
-                  Identify
-                </button>
-              </div>
-            </div>
-
-            {plantResult && (
-              <div className="bg-gray-50 rounded-lg p-6 mt-4">
-                <h3 className="font-semibold text-xl mb-4">Diagnosis:</h3>
-                <pre className="text-sm">{JSON.stringify(plantResult, null, 2)}</pre>
+            {history.length > 0 && (
+              <div className="mt-8">
+                <div className="flex items-center gap-2 mb-4">
+                  <History className="text-gray-500" />
+                  <h3 className="text-xl font-semibold">Recent Questions</h3>
+                </div>
+                <div className="space-y-4">
+                  {history.map((item, index) => (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100"
+                      onClick={() => { setQuery(item.query); setResponse(item.response); }}>
+                      <p className="font-medium text-green-700">{item.query}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
