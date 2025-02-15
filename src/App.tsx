@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Plane, Sun, Droplets, BadgeDollarSign, Send, Loader2, Sprout, Wind, ThermometerSun, History } from 'lucide-react';
+import { Plane, Sun, Droplets, BadgeDollarSign, Send, Loader2, Sprout, Wind, ThermometerSun, History, FileImage, Search } from 'lucide-react';
 import { getFarmingAdvice } from './lib/gemini';
+import { identifyPlantDisease } from './lib/plantApi';
 import ReactMarkdown from 'react-markdown';
 
 function App() {
@@ -10,6 +11,10 @@ function App() {
   const [history, setHistory] = useState<Array<{ query: string; response: string }>>(
     JSON.parse(localStorage.getItem('queryHistory') || '[]')
   );
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [plantResult, setPlantResult] = useState<any>(null);
+  const [plantLoading, setPlantLoading] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('queryHistory', JSON.stringify(history));
@@ -31,6 +36,29 @@ function App() {
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!selectedFile) {
+      alert("Please select an image first.");
+      return;
+    }
+
+    setPlantLoading(true);
+    try {
+      const result = await identifyPlantDisease(selectedFile);
+      setPlantResult(result);
+    } catch (error) {
+      console.error("Error identifying plant disease:", error);
+    } finally {
+      setPlantLoading(false);
+    }
+  };
+
   const categories = [
     { icon: <Sprout className="text-green-500" />, title: "Crop Planning", description: "Seasonal crop selection and rotation strategies" },
     { icon: <Sun className="text-yellow-500" />, title: "Growth Management", description: "Optimize your crop's growth cycle" },
@@ -38,14 +66,6 @@ function App() {
     { icon: <Wind className="text-gray-500" />, title: "Pest Control", description: "Natural and chemical pest management" },
     { icon: <ThermometerSun className="text-orange-500" />, title: "Weather Insights", description: "Climate-smart farming decisions" },
     { icon: <BadgeDollarSign className="text-green-500" />, title: "Market Updates", description: "Current prices and market trends" }
-  ];
-
-  const suggestions = [
-    "What crops are best suited for the current season?",
-    "How to manage water during drought conditions?",
-    "Natural methods to control common crop pests",
-    "Best practices for organic fertilization",
-    "When is the optimal time to harvest?"
   ];
 
   return (
@@ -71,6 +91,7 @@ function App() {
           ))}
         </div>
 
+        {/* AI Query Section */}
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-lg p-8 shadow-lg">
             <form onSubmit={handleSubmit} className="mb-6">
@@ -86,55 +107,46 @@ function App() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 flex items-center gap-2 text-lg font-medium"
+                    className="bg-green-600 text-white px-8 py-4 rounded-lg hover:bg-green-700 focus:outline-none flex items-center gap-2 text-lg font-medium"
                   >
-                    {loading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                    ) : (
-                      <Send className="w-6 h-6" />
-                    )}
+                    {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
                     Ask
                   </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {suggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      onClick={() => setQuery(suggestion)}
-                      className="text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full hover:bg-green-100"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
                 </div>
               </div>
             </form>
 
             {response && (
               <div className="bg-gray-50 rounded-lg p-6">
-                   <h3 className="font-semibold text-xl mb-4">Expert Advice:</h3>
-                   <ReactMarkdown>{response}</ReactMarkdown>
-               </div>
-              )}
+                <h3 className="font-semibold text-xl mb-4">Expert Advice:</h3>
+                <ReactMarkdown>{response}</ReactMarkdown>
+              </div>
+            )}
+          </div>
+        </div>
 
-            {history.length > 0 && (
-              <div className="mt-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <History className="text-gray-500" />
-                  <h3 className="text-xl font-semibold">Recent Questions</h3>
-                </div>
-                <div className="space-y-4">
-                  {history.map((item, index) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100"
-                         onClick={() => {
-                           setQuery(item.query);
-                           setResponse(item.response);
-                         }}>
-                      <p className="font-medium text-green-700">{item.query}</p>
-                    </div>
-                  ))}
-                </div>
+        {/* Plant Disease Identification */}
+        <div className="max-w-4xl mx-auto mt-12">
+          <div className="bg-white rounded-lg p-8 shadow-lg">
+            <h2 className="text-2xl font-semibold mb-4">Plant Disease Identification</h2>
+            <div className="flex flex-col gap-4">
+              <div className="flex gap-2">
+                <input type="file" accept="image/*" onChange={handleFileChange} className="border border-gray-300 rounded-lg p-2" />
+                <button
+                  onClick={handleImageUpload}
+                  disabled={plantLoading}
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 flex items-center gap-2 text-lg font-medium"
+                >
+                  {plantLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Search className="w-6 h-6" />}
+                  Identify
+                </button>
+              </div>
+            </div>
+
+            {plantResult && (
+              <div className="bg-gray-50 rounded-lg p-6 mt-4">
+                <h3 className="font-semibold text-xl mb-4">Diagnosis:</h3>
+                <pre className="text-sm">{JSON.stringify(plantResult, null, 2)}</pre>
               </div>
             )}
           </div>
